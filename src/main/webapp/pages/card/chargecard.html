@@ -1,0 +1,254 @@
+﻿<div class="row" id="chargecard">
+	<div class="col-lg-12">
+		<h1 class="page-header">充值业务</h1>
+
+		<!--<div v-show="type!=1" :class="{alert:true,'alert-success':type==2,'alert-danger':type==3}">
+			{{type==2?"操作成功":"操作失败，请联系管理员"}}</div>
+	</div>-->
+
+	<div class="col-lg-12">
+		<div class="panel panel-default">
+			<div class="panel-heading">详细信息</div>
+			<!-- /.panel-heading -->
+			<div class="panel-body">
+				<div id="dataTables-example_wrapper" class="dataTables_wrapper form-inline dt-bootstrap no-footer">
+
+					<div class="row">
+						<div class="col-sm-12">
+							<div id="dataTables-example_filter" class="dataTables_filter">
+								<label>卡号: <input type="text"
+									v-model.trim.lazy="params.cardCode"
+									class="form-control input-sm"
+									aria-controls="dataTables-example">
+								</label> <label> 身份证号： <input type="text"
+									v-model.trim.lazy="params.idCard"
+									class="form-control input-sm"
+									aria-controls="dataTables-example">
+								</label>
+								<button type="button" class="btn btn-info" @click="queryPage(1)">查询</button>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-sm-12">
+							<table width="100%" class="table table-striped table-bordered table-hover dataTable no-footer dtr-inline" role="grid" aria-describedby="dataTables-example_info" style="width: 100%;">
+								<thead>
+									<tr role="row">
+										<th>卡Id</th>
+										<th>卡号</th>
+										<th>卡类型</th>
+										<th>姓名</th>
+										<th>身份证号</th>
+										<th>性别</th>
+										<th>联系电话</th>
+										<th>卡状态</th>
+										<th>详情</th>
+										<th>充值</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr v-for="card in cardPage.list" role="row">
+										<td class="sorting_1">{{card.cardId}}</td>
+										<td>{{card.cardCode}}</td>
+										<!--<td>({{card.cardType}}==1?"社保卡":({{card.cardType}}==2?"普通租车卡":({{card.cardType}}==3?"临时租车卡":({{card.cardType}}==4?"员工卡":"维修调度卡"))))</td>-->
+										<td v-if="card.cardType==1">社保卡</td>
+										<td v-else-if="card.cardType==2">普通租车卡</td>
+										<td v-else-if="card.cardType==3">临时租车卡</td>
+										<td v-else-if="card.cardType==4">员工卡</td>
+										<td v-else-if="card.cardType==5">维修调度卡</td>
+										<td>{{card.name}}</td>
+										<td>{{card.idcard}}</td>
+										<td>{{card.sex}}</td>
+										<td>{{card.telphone}}</td>
+										<td v-if="card.status==0">正常</td>
+										<td v-else-if="card.status==1">已注销</td>
+										<td v-else-if="card.status==2">已挂失</td>
+										<td>
+											<button title="查看详情" type="button" class="btn btn-info btn-circle" data-toggle="modal" data-target="#detail" @click="openDetail(card.cardId)">
+												<i class="fa fa-list"></i>
+											</button>
+										</td>
+										<td>
+											<button title="充值" type="button" class="btn btn-info btn-circle" data-toggle="modal" data-target="#setmoneyDiv" @click="openDetail(card.cardId)" :class="{disabled:card.status==1}">
+												<i class="fa fa-list"></i>
+											</button>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-6">
+							<div class="dataTables_info" id="dataTables-example_info" role="status" aria-live="polite">
+								当前第{{cardPage.pageNum}}页，共{{cardPage.pages}}页</div>
+						</div>
+						<div class="col-sm-6">
+							<div class="dataTables_paginate paging_simple_numbers" id="dataTables-example_paginate">
+								<ul class="pagination">
+									<li :class="{paginate_button:true, previous:true, disabled:cardPage.isFirstPage}" aria-controls="dataTables-example" tabindex="0" id="dataTables-example_previous">
+										<a href="javascript:void(0)" @click="queryPage(cardPage.pageNum-1)">上一页</a>
+									</li>
+
+									<li v-for="item in cardPage.navigatepageNums" :class="{paginate_button:true, active:item==cardPage.pageNum}" aria-controls="dataTables-example" tabindex="0">
+										<a href="javascript:void(0)" @click="queryPage(item)">{{item}}</a>
+									</li>
+
+									<li :class="{paginate_button:true, next:true, disabled:cardPage.isLastPage}" aria-controls="dataTables-example" tabindex="0" id="dataTables-example_next">
+										<a href="javascript:void(0)" @click="queryPage(cardPage.pageNum+1)">下一页</a>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="detail" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content" style="width: 1000px; margin-left: -185px;">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+					<h4 class="modal-title" id="myModalLabel">查看卡详情</h4>
+				</div>
+				<div class="modal-body">
+
+					<div class="row">
+						<div class="col-lg-12">
+							<div class="panel panel-default">
+								<div class="panel-heading">卡号为{{order.cardId}}的信息</div>
+								<!-- /.panel-heading -->
+								<div class="panel-body">
+									<div class="table-responsive">
+										<table class="table table-striped table-bordered table-hover">
+											<thead>
+												<tr>
+													<th>手机</th>
+													<td>{{order.mobile}}</td>
+													<th>邮箱</th>
+													<td>{{order.email}}</td>
+													<th>住址</th>
+													<td>{{order.address}}</td>
+													<th>工作单位</th>
+													<td>{{order.work}}</td>
+													<th>注销标志</th>
+													<td>{{order.zxbj}}</td>
+													<th>月票金额</th>
+													<td>{{order.monthlyMoney}}</td>
+													<th>冻结金额</th>
+													<td>{{order.frozenMoney}}</td>
+													<th>钱包余额</th>
+													<td>{{order.walletMoney}}</td>
+												</tr>
+											</thead>
+
+										</table>
+									</div>
+									<!-- /.table-responsive -->
+								</div>
+								<!-- /.panel-body -->
+							</div>
+							<!-- /.panel -->
+						</div>
+						
+									<!-- /.table-responsive -->
+								</div>
+								<!-- /.panel-body -->
+							</div>
+							<!-- /.panel -->
+						</div>
+						<!-- /.col-lg-12 -->
+					</div>
+
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">确定</button>
+				</div>
+			</div>
+			<!-- /.modal-content -->
+			<div class="modal fade" id="setmoneyDiv" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content" style="width: 1000px; margin-left: -185px;">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+					<h4 class="modal-title" id="myModalLabel">卡充值</h4>
+				</div>
+				<div class="modal-body">
+
+					<div class="panel panel-default">
+						<div class="panel-heading">填写充值金额</div>
+						<!-- /.panel-heading -->
+						<div class="panel-body">
+							<!-- /.panel-body -->
+							<div class="row">
+								<!-- /.row -->
+								<form>
+								<div class="col-lg-6">
+									<div class="form-group">
+										<label>卡类型</label> 
+										<input v-if="order.cardType==1"  class="form-control" value="社保卡" readonly="readonly">
+										<input v-else-if="order.cardType==2"  class="form-control" value="普通租车卡" readonly="readonly">
+										<input v-else-if="order.cardType==3"  class="form-control" value="临时租车卡" readonly="readonly">
+										<input v-else-if="order.cardType==4"  class="form-control" value="员工卡" readonly="readonly">
+										<input v-else-if="order.cardType==5"  class="form-control" value="维修调度卡" readonly="readonly">
+									</div>
+									<div class="form-group">
+										<label>姓名</label> 
+										<input  class="form-control" v-model="order.name" readonly="readonly"> 
+										<br />
+									</div>
+									<div class="form-group">
+										<label>身份证号</label>
+										<input  class="form-control"  v-model="order.idcard" readonly="readonly">
+										<br />
+									</div>
+								</div>
+
+								<div class="col-lg-6" v-if="order.cardType==1 || order.cardType==2 || order.cardType==3">
+									<div class="form-group" v-if="order.cardType==1 || order.cardType==2">
+										<label>月票金额</label>
+										<input class="form-control"  :value="order.monthlyMoney" readonly="readonly">
+										<br />
+									</div>
+									<div class="form-group">
+										<label>冻结金额</label> 
+										<input class="form-control"  :value="order.frozenMoney" readonly="readonly">
+									</div>
+									<div class="form-group">
+										<label>钱包余额</label> 
+										<input class="form-control"  :value="order.walletMoney" readonly="readonly">
+										<br />
+									</div>
+								</div>
+								<div class="col-lg-6" v-if="order.cardType==1 || order.cardType==2 || order.cardType==3">
+									<div class="form-group" v-if="order.cardType==1 || order.cardType==2">
+										<label>月票充值</label>
+										<input class="form-control" v-model="monthlyMoney"  onchange="test()">
+										<br />
+									</div>
+									<div class="form-group">
+										<label>钱包余额充值</label> 
+										<input class="form-control" v-model="walletMoney" onchange="test()">
+										<br />
+									</div>
+								</div>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer" v-if="order.cardType==1 || order.cardType==2 || order.cardType==3">
+					<button type="button" class="btn btn-default" data-dismiss="modal" @click="chargeCard()">确定充值</button>
+				</div>
+			</div>
+		</div>
+	</div>
+		</div>
+		<!-- /.modal-dialog -->
+	
+	
+<!-- 相对路径 相对于/main/index.html -->
+<script type="text/javascript" src="../../js/regcard.js"></script>

@@ -1,0 +1,365 @@
+﻿<div class="row" id="regcard">
+	<div class="col-lg-12">
+		<h1 class="page-header">办卡业务</h1>
+		<button class="btn btn-primary" data-toggle="modal" data-target="#optDiv">新增卡</button>
+
+	<div class="col-lg-12">
+		<div class="panel panel-default">
+			<div class="panel-heading">详细信息</div>
+			<!-- /.panel-heading -->
+			<div class="panel-body">
+				<div id="dataTables-example_wrapper" class="dataTables_wrapper form-inline dt-bootstrap no-footer">
+
+					<div class="row">
+						<div class="col-sm-12">
+							<div id="dataTables-example_filter" class="dataTables_filter">
+								<label>卡号: <input type="text"
+									v-model.trim.lazy="params.cardCode"
+									class="form-control input-sm"
+									aria-controls="dataTables-example">
+								</label> <label> 身份证号： <input type="text"
+									v-model.trim.lazy="params.idCard"
+									class="form-control input-sm"
+									aria-controls="dataTables-example">
+								</label>
+								<button type="button" class="btn btn-info" @click="queryPage(1)">查询</button>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-sm-12">
+							<table width="100%" class="table table-striped table-bordered table-hover dataTable no-footer dtr-inline" role="grid" aria-describedby="dataTables-example_info" style="width: 100%;">
+								<thead>
+									<tr role="row">
+										<th>卡Id</th>
+										<th>卡号</th>
+										<th>卡类型</th>
+										<th>姓名</th>
+										<th>身份证号</th>
+										<th>性别</th>
+										<th>联系电话</th>
+										<th>卡状态</th>
+										<th>详情</th>
+										<th>修改</th>
+										<th>挂失</th>
+										<th>注销</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr v-for="card in cardPage.list" role="row">
+										<td class="sorting_1">{{card.cardId}}</td>
+										<td>{{card.cardCode}}</td>
+										<!--<td>({{card.cardType}}==1?"社保卡":({{card.cardType}}==2?"普通租车卡":({{card.cardType}}==3?"临时租车卡":({{card.cardType}}==4?"员工卡":"维修调度卡"))))</td>-->
+										<td v-if="card.cardType==1">社保卡</td>
+										<td v-else-if="card.cardType==2">普通租车卡</td>
+										<td v-else-if="card.cardType==3">临时租车卡</td>
+										<td v-else-if="card.cardType==4">员工卡</td>
+										<td v-else-if="card.cardType==5">维修调度卡</td>
+										<td>{{card.name}}</td>
+										<td>{{card.idcard}}</td>
+										<td>{{card.sex}}</td>
+										<td>{{card.telphone}}</td>
+										<td v-if="card.status==0">正常</td>
+										<td v-else-if="card.status==1">已注销</td>
+										<td v-else-if="card.status==2">已挂失</td>
+										<td>
+											<button title="查看详情" type="button" class="btn btn-info btn-circle" data-toggle="modal" data-target="#detail" @click="openDetail(card.cardId)">
+												<i class="fa fa-list"></i>
+											</button>
+										</td>
+										<td>
+											<button title="修改" type="button" class="btn btn-info btn-circle" data-toggle="modal" data-target="#updateDiv" @click="openDetail(card.cardId)" :class="{disabled:card.status==1}">
+												<i class="fa fa-list"></i>
+											</button>
+										</td>
+										<td>
+											<button title="挂失" type="button" class="btn btn-info btn-circle" data-toggle="modal" data-target="#detail" @click="reportLoss(card.cardId,card.status)">
+												<i class="fa fa-list"></i>
+											</button>
+										</td>
+										<td>
+											<button title="注销" type="button" class="btn btn-info btn-circle" data-toggle="modal" data-target="#detail" @click="logout(card.cardId,card.status)">
+												<i class="fa fa-list"></i>
+											</button>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-6">
+							<div class="dataTables_info" id="dataTables-example_info" role="status" aria-live="polite">
+								当前第{{cardPage.pageNum}}页，共{{cardPage.pages}}页</div>
+						</div>
+						<div class="col-sm-6">
+							<div class="dataTables_paginate paging_simple_numbers" id="dataTables-example_paginate">
+								<ul class="pagination">
+									<li :class="{paginate_button:true, previous:true, disabled:cardPage.isFirstPage}" aria-controls="dataTables-example" tabindex="0" id="dataTables-example_previous">
+										<a href="javascript:void(0)" @click="queryPage(cardPage.pageNum-1)">上一页</a>
+									</li>
+
+									<li v-for="item in cardPage.navigatepageNums" :class="{paginate_button:true, active:item==cardPage.pageNum}" aria-controls="dataTables-example" tabindex="0">
+										<a href="javascript:void(0)" @click="queryPage(item)">{{item}}</a>
+									</li>
+
+									<li :class="{paginate_button:true, next:true, disabled:cardPage.isLastPage}" aria-controls="dataTables-example" tabindex="0" id="dataTables-example_next">
+										<a href="javascript:void(0)" @click="queryPage(cardPage.pageNum+1)">下一页</a>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="detail" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content" style="width: 1000px; margin-left: -185px;">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+					<h4 class="modal-title" id="myModalLabel">查看卡详情</h4>
+				</div>
+				<div class="modal-body">
+
+					<div class="row">
+						<div class="col-lg-12">
+							<div class="panel panel-default">
+								<div class="panel-heading">卡号为{{order.cardId}}的信息</div>
+								<!-- /.panel-heading -->
+								<div class="panel-body">
+									<div class="table-responsive">
+										<table class="table table-striped table-bordered table-hover">
+											<thead>
+												<tr>
+													<th>手机</th>
+													<td>{{order.mobile}}</td>
+													<th>邮箱</th>
+													<td>{{order.email}}</td>
+													<th>住址</th>
+													<td>{{order.address}}</td>
+													<th>工作单位</th>
+													<td>{{order.work}}</td>
+													<th>注销标志</th>
+													<td>{{order.zxbj}}</td>
+													<th>月票金额</th>
+													<td>{{order.monthlyMoney}}</td>
+													<th>冻结金额</th>
+													<td>{{order.frozenMoney}}</td>
+													<th>钱包余额</th>
+													<td>{{order.walletMoney}}</td>
+												</tr>
+											</thead>
+
+										</table>
+									</div>
+									<!-- /.table-responsive -->
+								</div>
+								<!-- /.panel-body -->
+							</div>
+							<!-- /.panel -->
+						</div>
+						
+									<!-- /.table-responsive -->
+								</div>
+								<!-- /.panel-body -->
+							</div>
+							<!-- /.panel -->
+						</div>
+						<!-- /.col-lg-12 -->
+					</div>
+
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">确定</button>
+				</div>
+			</div>
+			<!-- /.modal-content -->
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+	
+	<div class="modal fade" id="updateDiv" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content" style="width: 1000px; margin-left: -185px;">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+					<h4 class="modal-title" id="myModalLabel">修改卡信息</h4>
+				</div>
+				<div class="modal-body">
+
+					<div class="panel panel-default">
+						<div class="panel-heading">修改信息</div>
+						<!-- /.panel-heading -->
+						<div class="panel-body">
+							<!-- /.panel-body -->
+							<div class="row">
+								<!-- /.row -->
+								<form>
+								<div class="col-lg-6">
+									<div class="form-group">
+										<label>卡类型</label> 
+										<input v-if="order.cardType==1"  class="form-control" value="社保卡" readonly="readonly">
+										<input v-else-if="order.cardType==2"  class="form-control" value="普通租车卡" readonly="readonly">
+										<input v-else-if="order.cardType==3"  class="form-control" value="临时租车卡" readonly="readonly">
+										<input v-else-if="order.cardType==4"  class="form-control" value="员工卡" readonly="readonly">
+										<input v-else-if="order.cardType==5"  class="form-control" value="维修调度卡" readonly="readonly">
+									</div>
+									<div class="form-group">
+										<label>姓名</label> 
+										<input  class="form-control" v-model="order.name" readonly="readonly"> 
+										<br />
+									</div>
+									<div class="form-group">
+										<label>身份证号</label>
+										<input  class="form-control"  v-model="order.idcard" readonly="readonly">
+										<br />
+									</div>
+								</div>
+
+								<div class="col-lg-6">
+									<div class="form-group">
+										<label>性别</label>
+										<input class="form-control"  v-model="order.sex" readonly="readonly">
+										<br />
+									</div>
+									<div class="form-group">
+										<label>联系电话</label> 
+										<input class="form-control"  v-model="order.telphone">
+									</div>
+									<div class="form-group">
+										<label>手机</label> 
+										<input class="form-control"  v-model="order.mobile">
+										<br />
+									</div>
+								</div>
+								<div class="col-lg-6">
+									<div class="form-group">
+										<label>邮箱</label> 
+										<input class="form-control"  v-model="order.email">
+										<br />
+									</div>
+									<div class="form-group">
+										<label>住址</label>
+										<input class="form-control"  v-model="order.address">
+									</div>
+									<div class="form-group">
+										<label>工作单位</label>
+										<input class="form-control"  v-model="order.work">
+									</div>
+								</div>
+								</form>
+							</div>
+							<!-- /.row -->
+						</div>
+						<!-- /.panel-body -->
+					</div>
+					<!-- /.panel -->
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal" @click="updateCard()">确定</button>
+				</div>
+			</div>
+			<!-- /.modal-content -->
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+
+
+	<div class="modal fade" id="optDiv" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content" style="width: 1000px; margin-left: -185px;">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+					<h4 class="modal-title" id="myModalLabel">办卡登记</h4>
+				</div>
+				<div class="modal-body">
+
+					<div class="panel panel-default">
+						<div class="panel-heading">办卡信息填写</div>
+						<!-- /.panel-heading -->
+						<div class="panel-body">
+							<!-- /.panel-body -->
+							<div class="row">
+								<!-- /.row -->
+								<form>
+								<div class="col-lg-6">
+									<div class="form-group">
+										<label>卡类型</label> 
+										<select v-model="newcard.cardType">
+												<option value="1">市民卡/社保卡</option>
+												<option value="2">A卡</option>
+												<option value="3">D卡</option>
+												<option value="4">员工卡</option>
+												<option value="5">维修调度卡</option>
+										</select><br />
+										<div class="alert alert-danger">请选择卡类型</div>
+									</div>
+									<div class="form-group">
+										<label>姓名</label> 
+										<input placeholder="姓名" class="form-control" v-model="newcard.name"> 
+										<br />
+										<div class="alert alert-danger">请输入姓名</div>
+									</div>
+									<div class="form-group">
+										<label>身份证号</label>
+										<input placeholder="身份证号" class="form-control" v-model="newcard.idcard">
+										<br />
+										<div class="alert alert-danger">请输入身份证号</div>
+									</div>
+								</div>
+
+								<div class="col-lg-6">
+									<div class="form-group">
+										<label>性别</label>
+										<input type="radio" value="男" v-model="newcard.sex">男
+										<input type="radio" value="女" v-model="newcard.sex">女
+										<br />
+										<div class="alert alert-danger">请选择性别</div>
+									</div>
+									<div class="form-group">
+										<label>联系电话</label> <input class="form-control" v-model="newcard.telphone">
+									</div>
+									<div class="form-group">
+										<label>手机</label> <input placeholder="手机号" class="form-control" v-model="newcard.mobile">
+										<br />
+										<div class="alert alert-danger">请填写手机号</div>
+									</div>
+									
+								</div>
+								<div class="col-lg-6">
+									<div class="form-group">
+										<label>邮箱</label> <input placeholder="邮箱" class="form-control" v-model="newcard.email">
+										<br />
+										<div class="alert alert-danger">请填写邮箱</div>
+									</div>
+									<div class="form-group">
+										<label>住址</label> <input class="form-control" v-model="newcard.address">
+									</div>
+									<div class="form-group">
+										<label>工作单位</label> <input class="form-control" v-model="newcard.work">
+									</div>
+								</div>
+								</form>
+							</div>
+							<!-- /.row -->
+						</div>
+						<!-- /.panel-body -->
+					</div>
+					<!-- /.panel -->
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal" @click="addNewCard()">保存</button>
+				</div>
+			</div>
+			<!-- /.modal-content -->
+		</div>
+		<!-- /.modal-dialog -->
+	</div>
+
+</div>
+<!-- 相对路径 相对于/main/index.html -->
+<script type="text/javascript" src="../../js/regcard.js"></script>
